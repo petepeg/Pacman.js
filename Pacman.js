@@ -8,9 +8,9 @@ let gameBoard = [
     [1,8,1,1,8,8,8,8,8,8,8,8,8,8,8,8,1,1,8,1],
     [1,8,1,1,8,1,1,1,1,1,1,1,1,1,1,8,1,1,8,1],
     [1,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,1],
-    [1,1,1,8,8,1,8,1,1,8,8,1,1,8,1,8,8,1,1,1],
-    [0,0,0,8,1,1,8,1,8,8,8,8,1,8,1,1,8,0,0,0],
-    [0,0,0,8,1,1,8,1,8,8,8,8,1,8,1,1,8,0,0,0],
+    [1,1,1,8,8,1,8,1,1,0,0,1,1,8,1,8,8,1,1,1],
+    [0,0,0,8,1,1,8,1,0,0,0,0,1,8,1,1,8,0,0,0],
+    [0,0,0,8,1,1,8,1,0,0,0,0,1,8,1,1,8,0,0,0],
     [1,1,1,8,8,1,8,1,1,1,1,1,1,8,1,8,8,1,1,1],
     [1,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,1],
     [1,8,1,1,8,1,1,1,1,1,1,1,1,1,1,8,1,1,8,1],
@@ -38,11 +38,17 @@ let gameArea = {
     }
 }
 
+let clock = 0;
+
 class Pacman {
     constructor(x,y) {
         this.x = x;
         this.y = y;
         this.dir = 's';
+        this.score = 0;
+        this.super = false;
+        this.timeStart = 0;
+        this.lives = 3;
     }
 
     setDir(direction){
@@ -71,7 +77,6 @@ class Pacman {
                 } else {
                     return true;
                 }
-                break;
             case 'l':
                 //left
                 if(gameBoard[this.y][this.x-1] == 1) {
@@ -118,6 +123,13 @@ class Pacman {
 
     }
 
+    die() {
+        this.lives -= 1;
+        this.x = 1;
+        this.y = 9;
+        this.dir = 's';
+    }
+
     update() {
         //wrap screen
         if(this.x < 0) {
@@ -125,7 +137,7 @@ class Pacman {
         } else if(this.x > gameArea.canvas.width/30) {
             this.x = 0;
         }
-
+        //movement
         switch(this.dir){
             case 's':
                 //still
@@ -155,20 +167,128 @@ class Pacman {
                 }
                 break; 
         }
+        // pellets and points
+        switch(gameBoard[this.y][this.x]) {
+            case 8:
+                this.score += 1;
+                gameBoard[this.y][this.x] = 0;
+                break;
+            case 9:
+                this.super = true;
+                this.timeStart = clock;
+                gameBoard[this.y][this.x] = 0;
+                console.log("super start!")
+                this.score += 10;
+        }
+        // super state
+        if(this.super && clock - this.timeStart > 50 ) {
+                this.super = false;
+                console.log("super over")
+        }
     }
 }
 
-function drawScreen(player) {
+class Ghost {
+    constructor(x,y) {
+        this.x = x;
+        this.y = y;
+        this.alive = true;
+        this.deathClock = 0;
+    }
+
+    checkAdjacent(direction) {
+        switch(direction){
+            case 's':
+                return true;
+            case 'u':
+                //up
+                if(gameBoard[this.y-1][this.x] == 1) {
+                    break;
+                } else {
+                    return true;
+                }
+            case 'd':
+                //down
+                if(gameBoard[this.y+1][this.x] == 1) {
+                    break;
+                } else {
+                    return true;
+                }
+            case 'l':
+                //left
+                if(gameBoard[this.y][this.x-1] == 1) {
+                    break;
+                } else {
+                    return true;
+                }
+            case 'r':
+                //right
+                if(gameBoard[this.y][this.x+1] == 1) {
+                    break;
+                } else {
+                    return true;
+                }
+        }
+        return false;
+    }
+
+    die() {
+        this.alive = false;
+        this.x = 9;
+        this.y = 9;
+        this.deathClock = clock;
+    }
+
+    update(player) {
+
+        if(this.alive){
+            // basic folow pacman
+            let xDiff = player.x - this.x;
+            let yDiff = player.y - this.y
+            
+            if(yDiff > 0 && this.checkAdjacent('d')) {
+                console.log("ghost down");
+                this.y += 1;
+            } else if(yDiff < 0 && this.checkAdjacent('u')) {
+                console.log("ghost up");
+                this.y -= 1;
+            } else if(xDiff > 0 && this.checkAdjacent('r')) {
+                console.log("ghost right");
+                this. x += 1;
+            }else if(xDiff < 0 && this.checkAdjacent('l')) {
+                console.log("ghost left");
+                this. x -= 1;
+            } else {
+                console.log("ghost stuck");
+            }
+
+            // check for pacman
+            if (player.x == this.x && player.y == this.y) {
+                if(player.super){
+                    this.die();
+                } else {
+                    player.die();
+                }
+            }
+        } else {
+            console.log("I'm dead")
+            if(clock - this.deathClock > 50) {
+                this.alive = true;
+            }
+        }
+
+        
+
+    }
+
+}
+
+function drawScreen(player, ghosts) {
     ctx = gameArea.context;
 
     //draw board
     for(let i = 0; i< gameBoard.length; i++) {
         for(let j = 0; j < gameBoard.length; j++) {
-            
-            /* if(gameBoard[i][j] == 1) {
-                ctx.fillStyle = 'black';
-                ctx.fillRect(j*30, i*30, 30, 30)
-            } */
             //pellets
             switch(gameBoard[i][j]){
                 //walls
@@ -191,17 +311,38 @@ function drawScreen(player) {
     }
 
     //draw player
-    ctx.fillStyle = 'yellow';
-    ctx.fillRect(player.x*30, player.y*30, 30,30)
+    if(player.super){
+        ctx.fillStyle = 'red';
+    } else {
+        ctx.fillStyle = 'yellow';
+    }
+    ctx.fillRect(player.x*30, player.y*30, 30,30);
+
+    // draw ghosts
+    for(let i = 0; i < ghosts.length; i++) {
+        ghost = ghosts[i];
+        ctx.fillStyle = 'green';
+        ctx.fillRect(ghost.x*30, ghost.y*30, 30, 30);
+    }
+    
+    //update clock
+    clock += 1;
 
 }
 
-let player = new Pacman(1,1);
+let player = new Pacman(1,9);
+let ghosts = [new Ghost(8,9)];
+
 function updateGameArea() {
     gameArea.clear();
     document.onkeydown = function(e){player.checkKey(e)};
     player.update();
-    drawScreen(player);
-
+    for(let i = 0; i < ghosts.length; i++) {
+        ghost = ghosts[i];
+        ghost.update(player);
+    }
+    document.getElementById("player_score").innerHTML = player.score;
+    document.getElementById("player_lives").innerHTML = player.lives;
+    drawScreen(player, ghosts);
 }
 
