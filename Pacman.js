@@ -1,5 +1,5 @@
 
-let gameBoard = [
+let gameBoardOne = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     [1,9,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,9,1],
     [1,8,1,1,1,1,8,1,1,1,1,1,1,8,1,1,1,1,8,1],
@@ -21,6 +21,7 @@ let gameBoard = [
     [1,9,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,9,1],
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ]
+let gameBoard = JSON.parse(JSON.stringify(gameBoardOne)); // Deep clone
 let gameArea = {
     canvas : document.createElement("canvas"),
     start : function() {
@@ -268,25 +269,47 @@ class Ghost {
     update(player, ghosts) {
 
         if(this.alive){
-            // basic folow pacman
+            // basic follow/ run from pacman
+            // needs work
             let xDiff = player.x - this.x;
             let yDiff = player.y - this.y
             
-            if(yDiff > 0 && this.checkAdjacent('d') && !this.checkForGhost('d', ghosts)) {
-                console.log("ghost down");
-                this.y += 1;
-            } else if(yDiff < 0 && this.checkAdjacent('u') && !this.checkForGhost('u', ghosts)) {
-                console.log("ghost up");
-                this.y -= 1;
-            } else if(xDiff > 0 && this.checkAdjacent('r') && !this.checkForGhost('r', ghosts)) {
-                console.log("ghost right");
-                this. x += 1;
-            }else if(xDiff < 0 && this.checkAdjacent('l') && !this.checkForGhost('l', ghosts)) {
-                console.log("ghost left");
-                this. x -= 1;
+            // run away 
+            if(player.super) {
+                if(yDiff < 0 && this.checkAdjacent('d') && !this.checkForGhost('d', ghosts)) {
+                    console.log("ghost down");
+                    this.y += 1;
+                } else if(yDiff > 0 && this.checkAdjacent('u') && !this.checkForGhost('u', ghosts)) {
+                    console.log("ghost up");
+                    this.y -= 1;
+                } else if(xDiff < 0 && this.checkAdjacent('r') && !this.checkForGhost('r', ghosts)) {
+                    console.log("ghost right");
+                    this. x += 1;
+                }else if(xDiff > 0 && this.checkAdjacent('l') && !this.checkForGhost('l', ghosts)) {
+                    console.log("ghost left");
+                    this. x -= 1;
+                } else {
+                    console.log("ghost stuck");
+                }
+            // run towards
             } else {
-                console.log("ghost stuck");
+                if(yDiff > 0 && this.checkAdjacent('d') && !this.checkForGhost('d', ghosts)) {
+                    console.log("ghost down");
+                    this.y += 1;
+                } else if(yDiff < 0 && this.checkAdjacent('u') && !this.checkForGhost('u', ghosts)) {
+                    console.log("ghost up");
+                    this.y -= 1;
+                } else if(xDiff > 0 && this.checkAdjacent('r') && !this.checkForGhost('r', ghosts)) {
+                    console.log("ghost right");
+                    this. x += 1;
+                }else if(xDiff < 0 && this.checkAdjacent('l') && !this.checkForGhost('l', ghosts)) {
+                    console.log("ghost left");
+                    this. x -= 1;
+                } else {
+                    console.log("ghost stuck");
+                }
             }
+
 
             // check for pacman
             if (player.x == this.x && player.y == this.y) {
@@ -308,6 +331,29 @@ class Ghost {
 
     }
 
+}
+
+function pelletCheck() {
+    console.log('pellet check')
+    for(let i = 0; i < gameBoard.length; i++){
+        if(gameBoard[i].includes(8)){
+            return true
+        }  
+    }
+    return false;
+}
+
+function nextLevel(player, ghosts) {
+    // reset board
+    gameBoard = gameBoard = JSON.parse(JSON.stringify(gameBoardOne));
+    player.x = 1;
+    player.y = 9;
+    player.dir = 's';
+    for(let i = 0; i < ghosts.length; i++) {
+        ghost = ghosts[i];
+        ghost.x = 8+i;
+        ghost.y = 9;
+    }
 }
 
 function drawScreen(player, ghosts) {
@@ -380,5 +426,8 @@ function updateGameArea() {
     document.getElementById("player_score").innerHTML = player.score;
     document.getElementById("player_lives").innerHTML = player.lives;
     drawScreen(player, ghosts);
+    if(!pelletCheck()) {
+        nextLevel(player, ghosts);
+    }
 }
 
