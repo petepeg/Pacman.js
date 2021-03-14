@@ -30,7 +30,8 @@ let gameArea = {
         this.context = this.canvas.getContext("2d");
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
         this.frameNo = 0;
-        this.interval = setInterval(updateGameArea, 150);
+        // game speed
+        this.interval = setInterval(updateGameArea, 250);
         this.canvas.addEventListener("contextmenu", event => event.preventDefault());
     },
     clear : function() {
@@ -202,8 +203,6 @@ class Ghost {
 
     checkAdjacent(direction) {
         switch(direction){
-            case 's':
-                return true;
             case 'u':
                 //up
                 if(gameBoard[this.y-1][this.x] == 1) {
@@ -236,6 +235,29 @@ class Ghost {
         return false;
     }
 
+    checkForGhost(direction,ghosts) {
+        for(let i = 0; i < ghosts.length; i++) {
+            let ghost = ghosts[i];
+            switch(direction) {
+                case 'u':
+                    if (this.y-1 == ghost.y && this.x == ghost.x) { return true }
+                    break;
+                case 'd':
+                    if (this.y+1 == ghost.y && this.x == ghost.x ) { return true }
+                    break;
+                case 'l':
+                    if (this.x-1 == ghost.x && this.y == ghost.y ) { return true }
+                    break;
+                case 'r':
+                    if (this.x+1 == ghost.x && this.y == ghost.y ) { return true }
+                    break;
+                default:
+                    return false;
+            }
+        }
+        return false;
+    }
+
     die() {
         this.alive = false;
         this.x = 9;
@@ -243,23 +265,23 @@ class Ghost {
         this.deathClock = clock;
     }
 
-    update(player) {
+    update(player, ghosts) {
 
         if(this.alive){
             // basic folow pacman
             let xDiff = player.x - this.x;
             let yDiff = player.y - this.y
             
-            if(yDiff > 0 && this.checkAdjacent('d')) {
+            if(yDiff > 0 && this.checkAdjacent('d') && !this.checkForGhost('d', ghosts)) {
                 console.log("ghost down");
                 this.y += 1;
-            } else if(yDiff < 0 && this.checkAdjacent('u')) {
+            } else if(yDiff < 0 && this.checkAdjacent('u') && !this.checkForGhost('u', ghosts)) {
                 console.log("ghost up");
                 this.y -= 1;
-            } else if(xDiff > 0 && this.checkAdjacent('r')) {
+            } else if(xDiff > 0 && this.checkAdjacent('r') && !this.checkForGhost('r', ghosts)) {
                 console.log("ghost right");
                 this. x += 1;
-            }else if(xDiff < 0 && this.checkAdjacent('l')) {
+            }else if(xDiff < 0 && this.checkAdjacent('l') && !this.checkForGhost('l', ghosts)) {
                 console.log("ghost left");
                 this. x -= 1;
             } else {
@@ -324,9 +346,14 @@ function drawScreen(player, ghosts) {
     ctx.fillRect(player.x*30, player.y*30, 30,30);
 
     // draw ghosts
+    let ghostColors = {
+        0:'green',
+        1:'purple',
+        2:'pink'
+    }
     for(let i = 0; i < ghosts.length; i++) {
         ghost = ghosts[i];
-        ctx.fillStyle = 'green';
+        ctx.fillStyle = ghostColors[i];
         ctx.fillRect(ghost.x*30, ghost.y*30, 30, 30);
     }
     
@@ -336,7 +363,11 @@ function drawScreen(player, ghosts) {
 }
 
 let player = new Pacman(1,9);
-let ghosts = [new Ghost(8,9)];
+let ghosts = [
+    new Ghost(8,9),
+    new Ghost(11,9),
+    new Ghost(12,9),
+];
 
 function updateGameArea() {
     gameArea.clear();
@@ -344,7 +375,7 @@ function updateGameArea() {
     player.update();
     for(let i = 0; i < ghosts.length; i++) {
         ghost = ghosts[i];
-        ghost.update(player);
+        ghost.update(player, ghosts);
     }
     document.getElementById("player_score").innerHTML = player.score;
     document.getElementById("player_lives").innerHTML = player.lives;
