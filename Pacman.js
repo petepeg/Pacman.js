@@ -59,6 +59,10 @@ class Pacman {
         this.dir = direction;
     }
 
+    setScore(scoreInc) {
+        this.score += scoreInc;
+    }
+
     checkAdjacent(direction) {
         switch(direction){
             case 's':
@@ -170,7 +174,7 @@ class Pacman {
         // pellets and points
         switch(gameBoard[this.y][this.x]) {
             case 8:
-                this.score += 1;
+                this.setScore(1);
                 gameBoard[this.y][this.x] = 0;
                 break;
             case 9:
@@ -178,7 +182,7 @@ class Pacman {
                 this.timeStart = clock;
                 gameBoard[this.y][this.x] = 0;
                 console.log("super start!")
-                this.score += 10;
+                this.setScore(10);
         }
         // super state
         if(this.super && clock - this.timeStart > 50 ) {
@@ -266,6 +270,7 @@ class Ghost {
             if (player.x == this.x && player.y == this.y) {
                 if(player.super){
                     this.die();
+                    player.setScore(50);
                 } else {
                     player.die();
                 }
