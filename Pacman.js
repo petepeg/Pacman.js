@@ -136,7 +136,47 @@ class Pacman {
         this.dir = 's';
     }
 
+    pixelCheck(direction) {
+        let ctx = gameArea.context
+        let pixdata = []
+        switch(direction) {
+            case 'u':
+                pixdata = ctx.getImageData(this.x*30, (this.y*30)-1, 30, 1);
+                break;
+            case 'd':
+                pixdata = ctx.getImageData(this.x*30, (this.y*30)+30, 30, 1);
+                break;
+            case 'l':
+                pixdata = ctx.getImageData((this.x*30)-1, this.y*30, 1, 30);
+                break;
+            case 'r':
+                pixdata = ctx.getImageData((this.x*30)+30, this.y*30, 1, 30);
+                break;
+        }
+        
+        return pixdata;
+    }
+
+    pixelWallCollision(direction) {
+        // Checks pixel data for a wall
+        let pixelStrip = this.pixelCheck(direction);
+        for(let i = 0; i < pixelStrip.data.length-4; i +=4) {
+            for(let j = 0; j < 4; j++) { // check for black pixel
+                if( j < 3 && pixelStrip.data[i+j] != 0 ) {
+                        return false
+                } else if(pixelStrip.data[i+j] == 255) {
+                    return true;
+                }
+            }
+        }
+        return false
+    }
+
     update() {
+        console.log('up',this.pixelWallCollision('u'))
+        console.log('down',this.pixelWallCollision('d'))
+        console.log('left',this.pixelWallCollision('l'))
+        console.log('right',this.pixelWallCollision('r'))
         //wrap screen
         if(this.x < 0) {
             this.x = gameArea.canvas.width/30;
@@ -150,25 +190,25 @@ class Pacman {
                 break;
             case 'u':
                 //up
-                if(this.checkAdjacent('u')) {
+                if(!this.pixelWallCollision('u')) {
                     this.y -= 1;
                 }
                 break;
             case 'd':
                 //down
-                if(this.checkAdjacent('d')) {
+                if(!this.pixelWallCollision('d')) {
                     this.y += 1;
                 }
                 break;
             case 'l':
                 //left
-                if(this.checkAdjacent('l')) {
+                if(!this.pixelWallCollision('l')) {
                     this.x -= 1;
                 }
                 break;
             case 'r':
                 //right
-                if(this.checkAdjacent('r')) {
+                if(!this.pixelWallCollision('r')) {
                     this.x += 1;
                 }
                 break; 
@@ -267,7 +307,6 @@ class Ghost {
     }
 
     update(player, ghosts) {
-
         if(this.alive){
             // basic follow/ run from pacman
             // needs work
@@ -334,7 +373,6 @@ class Ghost {
 }
 
 function pelletCheck() {
-    console.log('pellet check')
     for(let i = 0; i < gameBoard.length; i++){
         if(gameBoard[i].includes(8)){
             return true
@@ -416,16 +454,20 @@ let ghosts = [
 ];
 
 function updateGameArea() {
-    gameArea.clear();
     document.onkeydown = function(e){player.checkKey(e)};
+    
     player.update();
     for(let i = 0; i < ghosts.length; i++) {
         ghost = ghosts[i];
         ghost.update(player, ghosts);
     }
+    
+    gameArea.clear();
+    drawScreen(player, ghosts);
+
     document.getElementById("player_score").innerHTML = player.score;
     document.getElementById("player_lives").innerHTML = player.lives;
-    drawScreen(player, ghosts);
+    
     if(!pelletCheck()) {
         nextLevel(player, ghosts);
     }
