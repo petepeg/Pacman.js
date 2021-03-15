@@ -49,6 +49,8 @@ class Pacman {
         this.dir = 's';
         this.score = 0;
         this.super = false;
+        this.scary = false;
+        this.deathClock = 0;
         this.timeStart = 0;
         this.lives = 3;
     }
@@ -97,6 +99,8 @@ class Pacman {
         this.x = 30;
         this.y = 270;
         this.dir = 's';
+        this.scary = true;
+        this.deathClock = clock;
     }
 
     pixelCheck(direction) {
@@ -183,6 +187,7 @@ class Pacman {
                 break;
             case 9:
                 this.super = true;
+                this.scary = true;
                 this.timeStart = clock;
                 gameBoard[gy][gx] = 0;
                 console.log("super start!")
@@ -191,8 +196,15 @@ class Pacman {
         // super state
         if(this.super && clock - this.timeStart > 50 ) {
                 this.super = false;
+                this.scary = false;
                 console.log("super over")
         }
+
+        // death scary
+        if((this.scary && !this.super) && clock - this.deathClock > 15) {
+            this.scary = false;
+        }
+
     }
 }
 
@@ -277,22 +289,36 @@ class Ghost {
     checkForGhost(direction,ghosts) {
         for(let i = 0; i < ghosts.length; i++) {
             let ghost = ghosts[i];
+            console.log(i)
             switch(direction) {
                 case 'u':
-                    if (this.y-1 == ghost.y && this.x == ghost.x) { return true }
+                    //if (this.y-1 == ghost.y && this.x == ghost.x ) { return true }
+                    if( (this.x <= ghost.x + 29 && this.x >= ghost.x) || (this.x + 29 >= ghost.x && this.x+29 <= ghost.x + 29) ) {
+                        if( (this.y - 1 <= ghost.y + 29 && this.y - 1 >= ghost.y)  ) { 
+                            return true; } }
                     break;
                 case 'd':
-                    if (this.y+1 == ghost.y && this.x == ghost.x ) { return true }
+                    //if (this.y+1 == ghost.y && this.x == ghost.x ) { return true }
+                    if( (this.x <= ghost.x + 29 && this.x >= ghost.x) || (this.x + 29 >= ghost.x && this.x + 29 <= ghost.x + 29) ) {
+                        if( (this.y + 30 <= ghost.y + 29 && this.y + 30 >= ghost.y) ) { 
+                            return true; } }
                     break;
                 case 'l':
-                    if (this.x-1 == ghost.x && this.y == ghost.y ) { return true }
+                    //if (this.x-1 == ghost.x && this.y == ghost.y ) { return true }
+                    if( (this.x - 1 <= ghost.x + 29 && this.x - 1 >= ghost.x) ) {
+                        if( (this.y <= ghost.y + 29 && this.y >= ghost.y) || (this.y + 29 >= ghost.y && this.y+29 <= ghost.y + 29)  ) { 
+                            return true; } }
                     break;
                 case 'r':
-                    if (this.x+1 == ghost.x && this.y == ghost.y ) { return true }
+                    //if (this.x+1 == ghost.x && this.y == ghost.y ) { return true }
+                    if( (this.x + 30 <= ghost.x + 29 && this.x + 30 >= ghost.x) ) {
+                        if( (this.y <= ghost.y + 29 && this.y >= ghost.y) || (this.y+29 >= ghost.y && this.y+29 <= ghost.y + 29)  ) { 
+                            return true; } }
                     break;
                 default:
                     return false;
             }
+
         }
         return false;
     }
@@ -312,7 +338,7 @@ class Ghost {
             let yDiff = player.y - this.y
             let speed = 15;
             // run away 
-            if(player.super) {
+            if(player.scary) {
                 if(yDiff < 0 && !this.pixelWallCollision('d') ) {
                     this.y += speed;
                 } else if(yDiff > 0 && !this.pixelWallCollision('u') ) {
@@ -326,13 +352,13 @@ class Ghost {
                 }
             // run towards
             } else {
-                if(yDiff > 0 && !this.pixelWallCollision('d') ) {
+                if(yDiff > 0 && !this.pixelWallCollision('d') && !this.checkForGhost('d', ghosts)  ) {
                     this.y += speed;
-                } else if(yDiff < 0 && !this.pixelWallCollision('u') ) {
+                } else if(yDiff < 0 && !this.pixelWallCollision('u') && !this.checkForGhost('u', ghosts)  ) {
                     this.y -= speed;
-                } else if(xDiff > 0 && !this.pixelWallCollision('r')) {
+                } else if(xDiff > 0 && !this.pixelWallCollision('r') && !this.checkForGhost('r', ghosts) ) {
                     this. x += speed;
-                }else if(xDiff < 0 && !this.pixelWallCollision('l') ) {
+                } else if(xDiff < 0 && !this.pixelWallCollision('l') && !this.checkForGhost('l', ghosts) ) {
                     this. x -= speed;
                 } else {
                     console.log("ghost stuck");
@@ -439,7 +465,7 @@ function drawScreen(player, ghosts) {
 let player = new Pacman(30,270);
 let ghosts = [
     new Ghost(270,270),
-    new Ghost(300,270),
+    new Ghost(270,300),
     new Ghost(330,270),
 ];
 
