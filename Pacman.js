@@ -32,7 +32,7 @@ let gameArea = {
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
         this.frameNo = 0;
         // game speed
-        this.interval = setInterval(updateGameArea, 250);
+        this.interval = setInterval(updateGameArea, 100);
         this.canvas.addEventListener("contextmenu", event => event.preventDefault());
     },
     clear : function() {
@@ -54,51 +54,14 @@ class Pacman {
     }
 
     setDir(direction){
-        /* tried to make it more like pacman movement this sorta works but is not forgiving enough
-        if(this.checkAdjacent(direction)){
+        // Don't let the player stop on a wall, still not great
+        if(!this.pixelWallCollision(direction)){
             this.dir = direction;
-        }*/
-        this.dir = direction;
+        }
     }
 
     setScore(scoreInc) {
         this.score += scoreInc;
-    }
-
-    checkAdjacent(direction) {
-        switch(direction){
-            case 's':
-                return true;
-            case 'u':
-                //up
-                if(gameBoard[this.y-1][this.x] == 1) {
-                    break;
-                } else {
-                    return true;
-                }
-            case 'd':
-                //down
-                if(gameBoard[this.y+1][this.x] == 1) {
-                    break;
-                } else {
-                    return true;
-                }
-            case 'l':
-                //left
-                if(gameBoard[this.y][this.x-1] == 1) {
-                    break;
-                } else {
-                    return true;
-                }
-            case 'r':
-                //right
-                if(gameBoard[this.y][this.x+1] == 1) {
-                    break;
-                } else {
-                    return true;
-                }
-        }
-        return false;
     }
 
     checkKey(e) {
@@ -141,16 +104,16 @@ class Pacman {
         let pixdata = []
         switch(direction) {
             case 'u':
-                pixdata = ctx.getImageData(this.x*30, (this.y*30)-1, 30, 1);
+                pixdata = ctx.getImageData(this.x, (this.y)-1, 30, 1);
                 break;
             case 'd':
-                pixdata = ctx.getImageData(this.x*30, (this.y*30)+30, 30, 1);
+                pixdata = ctx.getImageData(this.x, (this.y)+30, 30, 1);
                 break;
             case 'l':
-                pixdata = ctx.getImageData((this.x*30)-1, this.y*30, 1, 30);
+                pixdata = ctx.getImageData((this.x)-1, this.y, 1, 30);
                 break;
             case 'r':
-                pixdata = ctx.getImageData((this.x*30)+30, this.y*30, 1, 30);
+                pixdata = ctx.getImageData((this.x)+30, this.y, 1, 30);
                 break;
         }
         
@@ -173,17 +136,14 @@ class Pacman {
     }
 
     update() {
-        console.log('up',this.pixelWallCollision('u'))
-        console.log('down',this.pixelWallCollision('d'))
-        console.log('left',this.pixelWallCollision('l'))
-        console.log('right',this.pixelWallCollision('r'))
         //wrap screen
         if(this.x < 0) {
-            this.x = gameArea.canvas.width/30;
-        } else if(this.x > gameArea.canvas.width/30) {
+            this.x = gameArea.canvas.width;
+        } else if(this.x > gameArea.canvas.width) {
             this.x = 0;
         }
         //movement
+        let speed = 15; // 5, 15 or 30 work best.
         switch(this.dir){
             case 's':
                 //still
@@ -191,38 +151,40 @@ class Pacman {
             case 'u':
                 //up
                 if(!this.pixelWallCollision('u')) {
-                    this.y -= 1;
+                    this.y -= speed;
                 }
                 break;
             case 'd':
                 //down
                 if(!this.pixelWallCollision('d')) {
-                    this.y += 1;
+                    this.y += speed;
                 }
                 break;
             case 'l':
                 //left
                 if(!this.pixelWallCollision('l')) {
-                    this.x -= 1;
+                    this.x -= speed;
                 }
                 break;
             case 'r':
                 //right
                 if(!this.pixelWallCollision('r')) {
-                    this.x += 1;
+                    this.x += speed;
                 }
                 break; 
         }
         // pellets and points
-        switch(gameBoard[this.y][this.x]) {
+        let gx = Math.floor((this.x+15)/30); // take the center of the players pos and scale into game space
+        let gy = Math.floor((this.y+15)/30);
+        switch(gameBoard[gy][gx]) {
             case 8:
                 this.setScore(1);
-                gameBoard[this.y][this.x] = 0;
+                gameBoard[gy][gx] = 0;
                 break;
             case 9:
                 this.super = true;
                 this.timeStart = clock;
-                gameBoard[this.y][this.x] = 0;
+                gameBoard[gy][gx] = 0;
                 console.log("super start!")
                 this.setScore(10);
         }
@@ -310,8 +272,8 @@ class Ghost {
         if(this.alive){
             // basic follow/ run from pacman
             // needs work
-            let xDiff = player.x - this.x;
-            let yDiff = player.y - this.y
+            let xDiff = Math.floor((player.x+15)/30) - this.x; //this is temporary and useless. ghosts need to be updated to pixel collisions 
+            let yDiff = Math.floor((player.y+15)/30) - this.y
             
             // run away 
             if(player.super) {
@@ -427,7 +389,7 @@ function drawScreen(player, ghosts) {
     } else {
         ctx.fillStyle = 'yellow';
     }
-    ctx.fillRect(player.x*30, player.y*30, 30,30);
+    ctx.fillRect(player.x, player.y, 30,30);
 
     // draw ghosts
     let ghostColors = {
@@ -446,7 +408,7 @@ function drawScreen(player, ghosts) {
 
 }
 
-let player = new Pacman(1,9);
+let player = new Pacman(30,270);
 let ghosts = [
     new Ghost(8,9),
     new Ghost(11,9),
