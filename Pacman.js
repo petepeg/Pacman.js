@@ -94,8 +94,8 @@ class Pacman {
 
     die() {
         this.lives -= 1;
-        this.x = 1;
-        this.y = 9;
+        this.x = 30;
+        this.y = 270;
         this.dir = 's';
     }
 
@@ -238,6 +238,42 @@ class Ghost {
         return false;
     }
 
+    pixelCheck(direction) {
+        let ctx = gameArea.context
+        let pixdata = []
+        switch(direction) {
+            case 'u':
+                pixdata = ctx.getImageData(this.x, (this.y)-1, 30, 1);
+                break;
+            case 'd':
+                pixdata = ctx.getImageData(this.x, (this.y)+30, 30, 1);
+                break;
+            case 'l':
+                pixdata = ctx.getImageData((this.x)-1, this.y, 1, 30);
+                break;
+            case 'r':
+                pixdata = ctx.getImageData((this.x)+30, this.y, 1, 30);
+                break;
+        }
+        
+        return pixdata;
+    }
+
+    pixelWallCollision(direction) {
+        // Checks pixel data for a wall
+        let pixelStrip = this.pixelCheck(direction);
+        for(let i = 0; i < pixelStrip.data.length-4; i +=4) {
+            for(let j = 0; j < 4; j++) { // check for black pixel
+                if( j < 3 && pixelStrip.data[i+j] != 0 ) {
+                        return false
+                } else if(pixelStrip.data[i+j] == 255) {
+                    return true;
+                }
+            }
+        }
+        return false
+    }
+
     checkForGhost(direction,ghosts) {
         for(let i = 0; i < ghosts.length; i++) {
             let ghost = ghosts[i];
@@ -263,8 +299,8 @@ class Ghost {
 
     die() {
         this.alive = false;
-        this.x = 9;
-        this.y = 9;
+        this.x = 270;
+        this.y = 270;
         this.deathClock = clock;
     }
 
@@ -272,63 +308,55 @@ class Ghost {
         if(this.alive){
             // basic follow/ run from pacman
             // needs work
-            let xDiff = Math.floor((player.x+15)/30) - this.x; //this is temporary and useless. ghosts need to be updated to pixel collisions 
-            let yDiff = Math.floor((player.y+15)/30) - this.y
-            
+            let xDiff = player.x - this.x; //this is temporary and useless. ghosts need to be updated to pixel collisions 
+            let yDiff = player.y - this.y
+            let speed = 15;
             // run away 
             if(player.super) {
-                if(yDiff < 0 && this.checkAdjacent('d') && !this.checkForGhost('d', ghosts)) {
-                    console.log("ghost down");
-                    this.y += 1;
-                } else if(yDiff > 0 && this.checkAdjacent('u') && !this.checkForGhost('u', ghosts)) {
-                    console.log("ghost up");
-                    this.y -= 1;
-                } else if(xDiff < 0 && this.checkAdjacent('r') && !this.checkForGhost('r', ghosts)) {
-                    console.log("ghost right");
-                    this. x += 1;
-                }else if(xDiff > 0 && this.checkAdjacent('l') && !this.checkForGhost('l', ghosts)) {
-                    console.log("ghost left");
-                    this. x -= 1;
+                if(yDiff < 0 && !this.pixelWallCollision('d') ) {
+                    this.y += speed;
+                } else if(yDiff > 0 && !this.pixelWallCollision('u') ) {
+                    this.y -= speed;
+                } else if(xDiff < 0 && !this.pixelWallCollision('r') ) {
+                    this. x += speed;
+                }else if(xDiff > 0 && !this.pixelWallCollision('l') ) {
+                    this. x -= speed;
                 } else {
                     console.log("ghost stuck");
                 }
             // run towards
             } else {
-                if(yDiff > 0 && this.checkAdjacent('d') && !this.checkForGhost('d', ghosts)) {
-                    console.log("ghost down");
-                    this.y += 1;
-                } else if(yDiff < 0 && this.checkAdjacent('u') && !this.checkForGhost('u', ghosts)) {
-                    console.log("ghost up");
-                    this.y -= 1;
-                } else if(xDiff > 0 && this.checkAdjacent('r') && !this.checkForGhost('r', ghosts)) {
-                    console.log("ghost right");
-                    this. x += 1;
-                }else if(xDiff < 0 && this.checkAdjacent('l') && !this.checkForGhost('l', ghosts)) {
-                    console.log("ghost left");
-                    this. x -= 1;
+                if(yDiff > 0 && !this.pixelWallCollision('d') ) {
+                    this.y += speed;
+                } else if(yDiff < 0 && !this.pixelWallCollision('u') ) {
+                    this.y -= speed;
+                } else if(xDiff > 0 && !this.pixelWallCollision('r')) {
+                    this. x += speed;
+                }else if(xDiff < 0 && !this.pixelWallCollision('l') ) {
+                    this. x -= speed;
                 } else {
                     console.log("ghost stuck");
                 }
             }
 
-
             // check for pacman
-            if (player.x == this.x && player.y == this.y) {
-                if(player.super){
-                    this.die();
-                    player.setScore(50);
-                } else {
-                    player.die();
+            if( (this.x <= player.x+29 && this.x >= player.x) || (this.x+29 >= player.x && this.x+29 <= player.x+29) ) {
+                if( (this.y <= player.y+29 && this.y >= player.y) || (this.y+29 >= player.y && this.y+29 <= player.y+29)  ) {
+                    if(player.super){
+                        this.die();
+                        player.setScore(50);
+                    } else {
+                        player.die();
+                    }
                 }
             }
+
         } else {
             console.log("I'm dead")
             if(clock - this.deathClock > 50) {
                 this.alive = true;
             }
         }
-
-        
 
     }
 
@@ -400,7 +428,7 @@ function drawScreen(player, ghosts) {
     for(let i = 0; i < ghosts.length; i++) {
         ghost = ghosts[i];
         ctx.fillStyle = ghostColors[i];
-        ctx.fillRect(ghost.x*30, ghost.y*30, 30, 30);
+        ctx.fillRect(ghost.x, ghost.y, 30, 30);
     }
     
     //update clock
@@ -410,9 +438,9 @@ function drawScreen(player, ghosts) {
 
 let player = new Pacman(30,270);
 let ghosts = [
-    new Ghost(8,9),
-    new Ghost(11,9),
-    new Ghost(12,9),
+    new Ghost(270,270),
+    new Ghost(300,270),
+    new Ghost(330,270),
 ];
 
 function updateGameArea() {
