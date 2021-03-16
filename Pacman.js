@@ -8,10 +8,10 @@ let gameBoardOne = [
     [1,8,1,1,8,8,8,8,8,8,8,8,8,8,8,8,1,1,8,1],
     [1,8,1,1,8,1,1,1,1,1,1,1,1,1,1,8,1,1,8,1],
     [1,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,1],
-    [1,1,1,8,8,1,8,1,1,0,0,1,1,8,1,8,8,1,1,1],
+    [1,1,1,8,1,1,8,1,1,0,0,1,1,8,1,1,8,1,1,1],
     [0,0,0,8,1,1,8,1,0,0,0,0,1,8,1,1,8,0,0,0],
     [0,0,0,8,1,1,8,1,0,0,0,0,1,8,1,1,8,0,0,0],
-    [1,1,1,8,8,1,8,1,1,1,1,1,1,8,1,8,8,1,1,1],
+    [1,1,1,8,1,1,8,1,1,1,1,1,1,8,1,1,8,1,1,1],
     [1,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,1],
     [1,8,1,1,8,1,1,1,1,1,1,1,1,1,1,8,1,1,8,1],
     [1,8,1,1,8,8,8,8,8,8,8,8,8,8,8,8,1,1,8,1],
@@ -72,23 +72,18 @@ class Pacman {
 
         if (e.keyCode == '38') {
             // up arrow
-            console.log("Up");
-            console.log(this);
             this.setDir('u');
         }
         else if (e.keyCode == '40') {
             // down arrow
-            console.log("Down");
             this.setDir('d');
         }
         else if (e.keyCode == '37') {
             // left arrow
-            console.log("Left");
             this.setDir('l');
         }
         else if (e.keyCode == '39') {
             // right arrow
-            console.log("Right");
             this.setDir('r');
         }
 
@@ -128,12 +123,8 @@ class Pacman {
         // Checks pixel data for a wall
         let pixelStrip = this.pixelCheck(direction);
         for(let i = 0; i < pixelStrip.data.length-4; i +=4) {
-            for(let j = 0; j < 4; j++) { // check for black pixel
-                if( j < 3 && pixelStrip.data[i+j] != 0 ) {
-                        return false
-                } else if(pixelStrip.data[i+j] == 255) {
-                    return true;
-                }
+            if(pixelStrip.data[i] + pixelStrip.data[i+1] + pixelStrip.data[i+2] == 0 && pixelStrip.data[i+3] == 255) {
+                return true;
             }
         }
         return false
@@ -214,82 +205,13 @@ class Ghost {
         this.y = y;
         this.alive = true;
         this.deathClock = 0;
-    }
-
-    checkAdjacent(direction) {
-        switch(direction){
-            case 'u':
-                //up
-                if(gameBoard[this.y-1][this.x] == 1) {
-                    break;
-                } else {
-                    return true;
-                }
-            case 'd':
-                //down
-                if(gameBoard[this.y+1][this.x] == 1) {
-                    break;
-                } else {
-                    return true;
-                }
-            case 'l':
-                //left
-                if(gameBoard[this.y][this.x-1] == 1) {
-                    break;
-                } else {
-                    return true;
-                }
-            case 'r':
-                //right
-                if(gameBoard[this.y][this.x+1] == 1) {
-                    break;
-                } else {
-                    return true;
-                }
-        }
-        return false;
-    }
-
-    pixelCheck(direction) {
-        let ctx = gameArea.context
-        let pixdata = []
-        switch(direction) {
-            case 'u':
-                pixdata = ctx.getImageData(this.x, (this.y)-1, 30, 1);
-                break;
-            case 'd':
-                pixdata = ctx.getImageData(this.x, (this.y)+30, 30, 1);
-                break;
-            case 'l':
-                pixdata = ctx.getImageData((this.x)-1, this.y, 1, 30);
-                break;
-            case 'r':
-                pixdata = ctx.getImageData((this.x)+30, this.y, 1, 30);
-                break;
-        }
-        
-        return pixdata;
-    }
-
-    pixelWallCollision(direction) {
-        // Checks pixel data for a wall
-        let pixelStrip = this.pixelCheck(direction);
-        for(let i = 0; i < pixelStrip.data.length-4; i +=4) {
-            for(let j = 0; j < 4; j++) { // check for black pixel
-                if( j < 3 && pixelStrip.data[i+j] != 0 ) {
-                        return false
-                } else if(pixelStrip.data[i+j] == 255) {
-                    return true;
-                }
-            }
-        }
-        return false
+        this.bored = false;
+        this.timeStart = 0;
     }
 
     checkForGhost(direction,ghosts) {
         for(let i = 0; i < ghosts.length; i++) {
             let ghost = ghosts[i];
-            console.log(i)
             switch(direction) {
                 case 'u':
                     //if (this.y-1 == ghost.y && this.x == ghost.x ) { return true }
@@ -306,13 +228,13 @@ class Ghost {
                 case 'l':
                     //if (this.x-1 == ghost.x && this.y == ghost.y ) { return true }
                     if( (this.x - 1 <= ghost.x + 29 && this.x - 1 >= ghost.x) ) {
-                        if( (this.y <= ghost.y + 29 && this.y >= ghost.y) || (this.y + 29 >= ghost.y && this.y+29 <= ghost.y + 29)  ) { 
+                        if( (this.y <= ghost.y + 29 && this.y >= ghost.y) || (this.y + 29 >= ghost.y && this.y + 29 <= ghost.y + 29)  ) { 
                             return true; } }
                     break;
                 case 'r':
                     //if (this.x+1 == ghost.x && this.y == ghost.y ) { return true }
                     if( (this.x + 30 <= ghost.x + 29 && this.x + 30 >= ghost.x) ) {
-                        if( (this.y <= ghost.y + 29 && this.y >= ghost.y) || (this.y+29 >= ghost.y && this.y+29 <= ghost.y + 29)  ) { 
+                        if( (this.y <= ghost.y + 29 && this.y >= ghost.y) || (this.y + 29 >= ghost.y && this.y + 29 <= ghost.y + 29)  ) { 
                             return true; } }
                     break;
                 default:
@@ -323,6 +245,38 @@ class Ghost {
         return false;
     }
 
+    pixelCheck(direction) {
+        let ctx = gameArea.context
+        let pixdata = []
+        switch(direction) {
+            case 'u':
+                pixdata = ctx.getImageData(this.x, this.y-1, 30, 1);
+                break;
+            case 'd':
+                pixdata = ctx.getImageData(this.x, this.y+30, 30, 1);
+                break;
+            case 'l':
+                pixdata = ctx.getImageData(this.x-1, this.y, 1, 30);
+                break;
+            case 'r':
+                pixdata = ctx.getImageData(this.x+30, this.y, 1, 30);
+                break;
+        }
+        
+        return pixdata;
+    }
+    
+    pixelWallCollision(direction) {
+        // Checks pixel data for a wall
+        let pixelStrip = this.pixelCheck(direction);
+        for(let i = 0; i < pixelStrip.data.length-4; i +=4) {
+            if(pixelStrip.data[i] + pixelStrip.data[i+1] + pixelStrip.data[i+2] == 0 && pixelStrip.data[i+3] == 255) {
+                return true;
+            }
+        }
+        return false
+    }
+    
     die() {
         this.alive = false;
         this.x = 270;
@@ -338,30 +292,33 @@ class Ghost {
             let yDiff = player.y - this.y
             let speed = 15;
             // run away 
-            if(player.scary) {
-                if(yDiff < 0 && !this.pixelWallCollision('d') ) {
+            let ctx = gameArea.context
+            if(player.scary || this.bored) {
+                if(yDiff < 0 && !this.pixelWallCollision('d', ctx) && !this.checkForGhost('d', ghosts) ) {
                     this.y += speed;
-                } else if(yDiff > 0 && !this.pixelWallCollision('u') ) {
+                } else if(yDiff > 0 && !this.pixelWallCollision('u', ctx) && !this.checkForGhost('u', ghosts) ) {
                     this.y -= speed;
-                } else if(xDiff < 0 && !this.pixelWallCollision('r') ) {
+                } else if(xDiff < 0 && !this.pixelWallCollision('r', ctx) && !this.checkForGhost('r', ghosts) ) {
                     this. x += speed;
-                }else if(xDiff > 0 && !this.pixelWallCollision('l') ) {
+                }else if(xDiff > 0 && !this.pixelWallCollision('l', ctx) && !this.checkForGhost('l', ghosts) ) {
                     this. x -= speed;
                 } else {
                     console.log("ghost stuck");
                 }
             // run towards
             } else {
-                if(yDiff > 0 && !this.pixelWallCollision('d') && !this.checkForGhost('d', ghosts)  ) {
+                if(yDiff > 0 && !this.pixelWallCollision('d', ctx) && !this.checkForGhost('d', ghosts) ) {
                     this.y += speed;
-                } else if(yDiff < 0 && !this.pixelWallCollision('u') && !this.checkForGhost('u', ghosts)  ) {
+                } else if(yDiff < 0 && !this.pixelWallCollision('u', ctx) && !this.checkForGhost('u', ghosts) ) {
                     this.y -= speed;
-                } else if(xDiff > 0 && !this.pixelWallCollision('r') && !this.checkForGhost('r', ghosts) ) {
+                } else if(xDiff > 0 && !this.pixelWallCollision('r', ctx) && !this.checkForGhost('r', ghosts) ) {
                     this. x += speed;
-                } else if(xDiff < 0 && !this.pixelWallCollision('l') && !this.checkForGhost('l', ghosts) ) {
+                } else if(xDiff < 0 && !this.pixelWallCollision('l', ctx) && !this.checkForGhost('l', ghosts) ) {
                     this. x -= speed;
                 } else {
-                    console.log("ghost stuck");
+                    console.log("ghost bored");
+                    this.bored = true;
+                    this.timeStart = clock;
                 }
             }
 
@@ -376,8 +333,12 @@ class Ghost {
                     }
                 }
             }
+            // bored timer
+            if(this.bored && clock - this.timeStart > 5) {
+                this.bored = false;
+            }
 
-        } else {
+        } else { //if dead
             console.log("I'm dead")
             if(clock - this.deathClock > 50) {
                 this.alive = true;
@@ -399,14 +360,14 @@ function pelletCheck() {
 
 function nextLevel(player, ghosts) {
     // reset board
-    gameBoard = gameBoard = JSON.parse(JSON.stringify(gameBoardOne));
-    player.x = 1;
-    player.y = 9;
+    gameBoard = JSON.parse(JSON.stringify(gameBoardOne));
+    player.x = 30;
+    player.y = 270;
     player.dir = 's';
     for(let i = 0; i < ghosts.length; i++) {
         ghost = ghosts[i];
-        ghost.x = 8+i;
-        ghost.y = 9;
+        ghost.x = 240+(i*30);
+        ghost.y = 270;
     }
 }
 
