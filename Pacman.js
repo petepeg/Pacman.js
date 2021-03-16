@@ -48,8 +48,11 @@ class Pacman {
     constructor(x,y) {
         this.x = x;
         this.y = y;
+        this.speed = 15;
         this.dir = 's';
         this.reqDir = 's'; // requested direction
+        this.reqTime = 0;
+        this.timeout = 7;
         this.score = 0;
         this.super = false;
         this.scary = false;
@@ -150,10 +153,15 @@ class Pacman {
         // try and make last input move
         if(this.reqDir != this.dir) {
             this.setDir(this.reqDir);
+            this.reqTime += 1;
             console.log('req != dir')
         }
+        // timeout cached input
+        if(this.reqTime >= this.timeout) {
+            this.reqDir = this.dir;
+            this.reqTime = 0;
+        }
         //movement
-        let speed = 15; // 5, 15 or 30 work best.
         switch(this.dir){
             case 's':
                 //still
@@ -161,25 +169,25 @@ class Pacman {
             case 'u':
                 //up
                 if(!this.pixelWallCollision('u')) {
-                    this.y -= speed;
+                    this.y -= this.speed;
                 }
                 break;
             case 'd':
                 //down
                 if(!this.pixelWallCollision('d')) {
-                    this.y += speed;
+                    this.y += this.speed;
                 }
                 break;
             case 'l':
                 //left
                 if(!this.pixelWallCollision('l')) {
-                    this.x -= speed;
+                    this.x -= this.speed;
                 }
                 break;
             case 'r':
                 //right
                 if(!this.pixelWallCollision('r')) {
-                    this.x += speed;
+                    this.x += this.speed;
                 }
                 break; 
         }
@@ -218,6 +226,7 @@ class Ghost {
     constructor(x,y) {
         this.x = x;
         this.y = y;
+        this.speed = 15;
         this.alive = true;
         this.deathClock = 0;
         this.bored = false;
@@ -301,31 +310,30 @@ class Ghost {
             // needs work
             let xDiff = player.x - this.x; 
             let yDiff = player.y - this.y
-            let speed = 15;
             // run away 
             let ctx = gameArea.context
             if(player.scary || this.bored) {
                 if(yDiff < 0 && !this.pixelWallCollision('d', ctx) && !this.checkForGhost('d', ghosts) ) {
-                    this.y += speed;
+                    this.y += this.speed;
                 } else if(yDiff > 0 && !this.pixelWallCollision('u', ctx) && !this.checkForGhost('u', ghosts) ) {
-                    this.y -= speed;
+                    this.y -= this.speed;
                 } else if(xDiff < 0 && !this.pixelWallCollision('r', ctx) && !this.checkForGhost('r', ghosts) ) {
-                    this. x += speed;
+                    this. x += this.speed;
                 }else if(xDiff > 0 && !this.pixelWallCollision('l', ctx) && !this.checkForGhost('l', ghosts) ) {
-                    this. x -= speed;
+                    this. x -= this.speed;
                 } else {
                     console.log("ghost stuck");
                 }
             // run towards
             } else {
                 if(yDiff > 0 && !this.pixelWallCollision('d', ctx) && !this.checkForGhost('d', ghosts) ) {
-                    this.y += speed;
+                    this.y += this.speed;
                 } else if(yDiff < 0 && !this.pixelWallCollision('u', ctx) && !this.checkForGhost('u', ghosts) ) {
-                    this.y -= speed;
+                    this.y -= this.speed;
                 } else if(xDiff > 0 && !this.pixelWallCollision('r', ctx) && !this.checkForGhost('r', ghosts) ) {
-                    this. x += speed;
+                    this. x += this.speed;
                 } else if(xDiff < 0 && !this.pixelWallCollision('l', ctx) && !this.checkForGhost('l', ghosts) ) {
-                    this. x -= speed;
+                    this. x -= this.speed;
                 } else {
                     console.log("ghost bored");
                     this.bored = true;
@@ -547,6 +555,7 @@ function drawPauseScreen(){
     ctx.font = "30px Console";
     if(gameOver){
         ctx.fillText("GAME OVER", 211, 300);
+        ctx.fillText("R To Restart", 220, 412);
     } else {
         ctx.fillText("PAUSE", 250, 300);
 
