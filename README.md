@@ -10,3 +10,6 @@ I didn't like how big the steps were because it made the game feel clunky, movin
 The player and ghosts now are using the canvas data to detect walls(which may turn out to be a bad idea) they look for black pixels and if they see them wont pass. I handled ghost to ghost and ghost to player collisions but just checking the whole position range which works great for squares, but might be a little sloppy feeling once they are no longer squares. I changed pellet detection to some really sloppy divide and round, so as soon as Pacmans center enters a new square he eats the pellet, surprisingly not terrible. I have a whole host of new bugs but over all its feeling better.
 
 Another new feature is a scary state for Pacman that ties into his super state, so that I can have the ghost run away when he dies. Otherwise he just gets spawn camped.
+
+### Night Two
+Had some thoughts came back and squashed some bugs. Ghosts no longer cheat by using the yellow of Pac Square to trick the wall collision algorithm. I also added a bored feature to the ghosts so they will flop to run away behavior when they get stuck. This is a placeholder till i get some different move states rather than run towards and away, but works surprisingly well at generating interesting behavior.
