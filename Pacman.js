@@ -311,28 +311,27 @@ class Ghost {
             let xDiff = player.x - this.x; 
             let yDiff = player.y - this.y
             // run away 
-            let ctx = gameArea.context
             if(player.scary || this.bored) {
-                if(yDiff < 0 && !this.pixelWallCollision('d', ctx) && !this.checkForGhost('d', ghosts) ) {
+                if(yDiff < 0 && !this.pixelWallCollision('d') && !this.checkForGhost('d', ghosts) ) {
                     this.y += this.speed;
-                } else if(yDiff > 0 && !this.pixelWallCollision('u', ctx) && !this.checkForGhost('u', ghosts) ) {
+                } else if(yDiff > 0 && !this.pixelWallCollision('u') && !this.checkForGhost('u', ghosts) ) {
                     this.y -= this.speed;
-                } else if(xDiff < 0 && !this.pixelWallCollision('r', ctx) && !this.checkForGhost('r', ghosts) ) {
+                } else if(xDiff < 0 && this.x + 45 <= gameArea.canvas.width && !this.pixelWallCollision('r') && !this.checkForGhost('r', ghosts) ) {
                     this. x += this.speed;
-                }else if(xDiff > 0 && !this.pixelWallCollision('l', ctx) && !this.checkForGhost('l', ghosts) ) {
+                }else if(xDiff > 0 && this.x - 15 >= 0 && !this.pixelWallCollision('l') && !this.checkForGhost('l', ghosts) ) {
                     this. x -= this.speed;
                 } else {
                     console.log("ghost stuck");
                 }
             // run towards
             } else {
-                if(yDiff > 0 && !this.pixelWallCollision('d', ctx) && !this.checkForGhost('d', ghosts) ) {
+                if(yDiff > 0 && !this.pixelWallCollision('d') && !this.checkForGhost('d', ghosts) ) {
                     this.y += this.speed;
-                } else if(yDiff < 0 && !this.pixelWallCollision('u', ctx) && !this.checkForGhost('u', ghosts) ) {
+                } else if(yDiff < 0 && !this.pixelWallCollision('u') && !this.checkForGhost('u', ghosts) ) {
                     this.y -= this.speed;
-                } else if(xDiff > 0 && !this.pixelWallCollision('r', ctx) && !this.checkForGhost('r', ghosts) ) {
+                } else if(xDiff > 0 && !this.pixelWallCollision('r') && !this.checkForGhost('r', ghosts) ) {
                     this. x += this.speed;
-                } else if(xDiff < 0 && !this.pixelWallCollision('l', ctx) && !this.checkForGhost('l', ghosts) ) {
+                } else if(xDiff < 0 && !this.pixelWallCollision('l') && !this.checkForGhost('l', ghosts) ) {
                     this. x -= this.speed;
                 } else {
                     console.log("ghost bored");
@@ -393,6 +392,7 @@ function nextLevel(player, ghosts) {
     player.x = 30;
     player.y = 270;
     player.dir = 's';
+    player.reqDir = 's';
     for(let i = 0; i < ghosts.length; i++) {
         ghost = ghosts[i];
         ghost.x = 240+(i*30);
@@ -525,11 +525,11 @@ function drawScreen(player, ghosts) {
         //ctx.fillRect(ghost.x, ghost.y, 30, 30); // test rect
         // body
         ctx.beginPath();
-        ctx.moveTo(ghost.x + 0, ghost.y + 15);
-        ctx.lineTo(ghost.x + 0, ghost.y + 29);
-        ctx.lineTo(ghost.x + 30, ghost.y + 29);
-        ctx.lineTo(ghost.x + 30, ghost.y + 15);
-        ctx.arc(ghost.x + 15, ghost.y + 15, 15, 0, Math.PI, true);
+        ctx.moveTo(ghost.x + 1, ghost.y + 15);
+        ctx.lineTo(ghost.x + 1, ghost.y + 29);
+        ctx.lineTo(ghost.x + 29, ghost.y + 29);
+        ctx.lineTo(ghost.x + 29, ghost.y + 15);
+        ctx.arc(ghost.x + 15, ghost.y + 15, 14, 0, Math.PI, true);
         ctx.stroke();
         ctx.fill();
          
