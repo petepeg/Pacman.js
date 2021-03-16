@@ -39,14 +39,17 @@ let gameArea = {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 }
-
+// Global Clock
 let clock = 0;
+let gamePause = false;
+let gameOver = false;
 // TODO master entity class, die, pixelchecks will live here as well as shared vars
 class Pacman {
     constructor(x,y) {
         this.x = x;
         this.y = y;
         this.dir = 's';
+        this.reqDir = 's'; // requested direction
         this.score = 0;
         this.super = false;
         this.scary = false;
@@ -60,6 +63,7 @@ class Pacman {
         if(!this.pixelWallCollision(direction)){
             this.dir = direction;
         }
+        this.reqDir = direction; // set a cached input
     }
 
     setScore(scoreInc) {
@@ -70,21 +74,26 @@ class Pacman {
 
         e = e || window.event;
 
-        if (e.keyCode == '38') {
+        if (e.code == 'ArrowUp') {
             // up arrow
             this.setDir('u');
         }
-        else if (e.keyCode == '40') {
+        else if (e.code == 'ArrowDown') {
             // down arrow
             this.setDir('d');
         }
-        else if (e.keyCode == '37') {
+        else if (e.code == 'ArrowLeft') {
             // left arrow
             this.setDir('l');
         }
-        else if (e.keyCode == '39') {
+        else if (e.code == 'ArrowRight') {
             // right arrow
             this.setDir('r');
+        } else if (e.code == 'KeyP') {
+            // p for pause
+            gamePause = true;
+        } else {
+            console.log(e.code);
         }
 
     }
@@ -94,6 +103,7 @@ class Pacman {
         this.x = 30;
         this.y = 270;
         this.dir = 's';
+        this.reqDir = 's';
         this.scary = true;
         this.deathClock = clock;
     }
@@ -132,10 +142,15 @@ class Pacman {
 
     update() {
         //wrap screen
-        if(this.x < 0) {
-            this.x = gameArea.canvas.width;
-        } else if(this.x > gameArea.canvas.width) {
+        if(this.x+30 <= 0) {
+            this.x = gameArea.canvas.width-30;
+        } else if(this.x >= gameArea.canvas.width) {
             this.x = 0;
+        }
+        // try and make last input move
+        if(this.reqDir != this.dir) {
+            this.setDir(this.reqDir);
+            console.log('req != dir')
         }
         //movement
         let speed = 15; // 5, 15 or 30 work best.
@@ -329,6 +344,12 @@ class Ghost {
                     }
                 }
             }
+
+            // get distracted
+            if(clock % 30 == 0) {
+                this.bored = true;
+                this.timeStart = clock;
+            }
             // bored timer
             if(this.bored && clock - this.timeStart > 5) {
                 this.bored = false;
@@ -345,13 +366,17 @@ class Ghost {
 
 }
 
-function pelletCheck() {
+function pelletCheck(player, ghosts) {
+    let result = false;
     for(let i = 0; i < gameBoard.length; i++){
-        if(gameBoard[i].includes(8)){
-            return true
-        }  
+        if( gameBoard[i].includes(8) ){
+             result = true;
+        }
     }
-    return false;
+
+    if(!result) {
+        nextLevel(player, ghosts)
+    }
 }
 
 function nextLevel(player, ghosts) {
@@ -364,6 +389,21 @@ function nextLevel(player, ghosts) {
         ghost = ghosts[i];
         ghost.x = 240+(i*30);
         ghost.y = 270;
+    }
+}
+
+function restartGame(player, ghosts) {
+    nextLevel(player,ghosts);
+    player.score = 0;
+    player.lives = 3;
+    gamePause = false;
+    gameOver = false;
+}
+
+function lifeCheck(player) {
+    if(player.lives <= 0){
+        gamePause = true;
+        gameOver = true;
     }
 }
 
@@ -502,6 +542,18 @@ function drawScreen(player, ghosts) {
 
 }
 
+function drawPauseScreen(){
+    ctx = gameArea.context;
+    ctx.font = "30px Console";
+    if(gameOver){
+        ctx.fillText("GAME OVER", 211, 300);
+    } else {
+        ctx.fillText("PAUSE", 250, 300);
+
+    }
+
+}
+
 // Entity Inst
 let player = new Pacman(30,270);
 let ghosts = [
@@ -512,22 +564,42 @@ let ghosts = [
 
 // Game Loop area
 function updateGameArea() {
-    document.onkeydown = function(e){player.checkKey(e)};
+    if(!gamePause) {
+        document.onkeydown = function(e){player.checkKey(e)};
     
-    player.update();
-    for(let i = 0; i < ghosts.length; i++) {
-        ghost = ghosts[i];
-        ghost.update(player, ghosts);
-    }
+        player.update();
+        for(let i = 0; i < ghosts.length; i++) {
+            ghost = ghosts[i];
+            ghost.update(player, ghosts);
+        }
+        
+        gameArea.clear();
+        drawScreen(player, ghosts);
     
-    gameArea.clear();
-    drawScreen(player, ghosts);
+        document.getElementById("player_score").innerHTML = player.score;
+        document.getElementById("player_lives").innerHTML = player.lives;
+        
+        pelletCheck(player, ghosts);
+        lifeCheck(player);
 
-    document.getElementById("player_score").innerHTML = player.score;
-    document.getElementById("player_lives").innerHTML = player.lives;
-    
-    if(!pelletCheck()) {
-        nextLevel(player, ghosts);
+    } else {
+        // Game over / Pause Screen
+        document.onkeydown = function(e){
+            e = e || window.event;
+            if (e.code == 'KeyP') {
+                // p for unpause
+                gamePause = false;
+            } else if (e.code == 'KeyR') {
+                // restart game
+                console.log('Restart Game')
+                restartGame(player,ghosts);
+
+            } else {
+                console.log(e.code)
+            }
+        };
+        drawPauseScreen();
     }
+
 }
 
