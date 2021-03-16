@@ -41,7 +41,7 @@ let gameArea = {
 }
 
 let clock = 0;
-
+// TODO master entity class, die, pixelchecks will live here as well as shared vars
 class Pacman {
     constructor(x,y) {
         this.x = x;
@@ -214,25 +214,21 @@ class Ghost {
             let ghost = ghosts[i];
             switch(direction) {
                 case 'u':
-                    //if (this.y-1 == ghost.y && this.x == ghost.x ) { return true }
                     if( (this.x <= ghost.x + 29 && this.x >= ghost.x) || (this.x + 29 >= ghost.x && this.x+29 <= ghost.x + 29) ) {
                         if( (this.y - 1 <= ghost.y + 29 && this.y - 1 >= ghost.y)  ) { 
                             return true; } }
                     break;
                 case 'd':
-                    //if (this.y+1 == ghost.y && this.x == ghost.x ) { return true }
                     if( (this.x <= ghost.x + 29 && this.x >= ghost.x) || (this.x + 29 >= ghost.x && this.x + 29 <= ghost.x + 29) ) {
                         if( (this.y + 30 <= ghost.y + 29 && this.y + 30 >= ghost.y) ) { 
                             return true; } }
                     break;
                 case 'l':
-                    //if (this.x-1 == ghost.x && this.y == ghost.y ) { return true }
                     if( (this.x - 1 <= ghost.x + 29 && this.x - 1 >= ghost.x) ) {
                         if( (this.y <= ghost.y + 29 && this.y >= ghost.y) || (this.y + 29 >= ghost.y && this.y + 29 <= ghost.y + 29)  ) { 
                             return true; } }
                     break;
                 case 'r':
-                    //if (this.x+1 == ghost.x && this.y == ghost.y ) { return true }
                     if( (this.x + 30 <= ghost.x + 29 && this.x + 30 >= ghost.x) ) {
                         if( (this.y <= ghost.y + 29 && this.y >= ghost.y) || (this.y + 29 >= ghost.y && this.y + 29 <= ghost.y + 29)  ) { 
                             return true; } }
@@ -244,8 +240,8 @@ class Ghost {
         }
         return false;
     }
-
     pixelCheck(direction) {
+        // Get a sliver pixels nest to the entity
         let ctx = gameArea.context
         let pixdata = []
         switch(direction) {
@@ -288,7 +284,7 @@ class Ghost {
         if(this.alive){
             // basic follow/ run from pacman
             // needs work
-            let xDiff = player.x - this.x; //this is temporary and useless. ghosts need to be updated to pixel collisions 
+            let xDiff = player.x - this.x; 
             let yDiff = player.y - this.y
             let speed = 15;
             // run away 
@@ -422,14 +418,14 @@ function drawScreen(player, ghosts) {
     clock += 1;
 
 }
-
+// Entity Inst
 let player = new Pacman(30,270);
 let ghosts = [
     new Ghost(270,270),
     new Ghost(270,300),
     new Ghost(330,270),
 ];
-
+// Game Loop area
 function updateGameArea() {
     document.onkeydown = function(e){player.checkKey(e)};
     
