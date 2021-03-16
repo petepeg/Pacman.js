@@ -371,6 +371,8 @@ function drawScreen(player, ghosts) {
     ctx = gameArea.context;
 
     //draw board
+    ctx.fillStyle = '#0000c8';
+    ctx.fillRect(0,0,600,600);
     for(let i = 0; i< gameBoard.length; i++) {
         for(let j = 0; j < gameBoard.length; j++) {
             //pellets
@@ -382,13 +384,13 @@ function drawScreen(player, ghosts) {
                     break;
                 //pellets
                 case 8:
-                    ctx.fillStyle = 'blue';
+                    ctx.fillStyle = '#edd100';
                     ctx.fillRect((j*30)+15, (i*30)+15, 6, 6)
                     break;
                 //super pellets
                 case 9:
-                    ctx.fillStyle = 'red';
-                    ctx.fillRect((j*30)+15, (i*30)+15, 6, 6)
+                    ctx.fillStyle = '#edd100';
+                    ctx.fillRect((j*30)+15, (i*30)+15, 12, 12)
                     break;
             }
         }
@@ -397,10 +399,70 @@ function drawScreen(player, ghosts) {
     //draw player
     if(player.super){
         ctx.fillStyle = 'red';
+        ctx.strokeStyle = 'red';
     } else {
-        ctx.fillStyle = 'yellow';
+        ctx.fillStyle = '#edd100';
+        ctx.strokeStyle = '#edd100';
     }
-    ctx.fillRect(player.x, player.y, 30,30);
+    // ctx.fillRect(player.x, player.y, 30,30); // test square
+    // animated pac
+    if(clock % 3 == 0) {
+        ctx.lineWidth = '1';
+        switch(player.dir) {
+            case 'u':
+                ctx.beginPath();
+                ctx.moveTo(player.x+5,player.y+5);
+                ctx.lineTo(player.x+15,player.y+15),
+                ctx.lineTo(player.x+25,player.y+5);
+                ctx.arc(player.x+15,player.y+15,15,1.75*Math.PI,1.25*Math.PI, false);
+                ctx.stroke();
+                ctx.fill();
+                break;
+            case 'd':
+                ctx.beginPath();
+                ctx.moveTo(player.x+5,player.y+25);
+                ctx.lineTo(player.x+15,player.y+15),
+                ctx.lineTo(player.x+25,player.y+25);
+                ctx.arc(player.x+15,player.y+15,15,0.25*Math.PI,0.75*Math.PI, true);
+                ctx.stroke();
+                ctx.fill();
+                break;
+            case 'l':
+                ctx.beginPath();
+                ctx.moveTo(player.x+5,player.y+5);
+                ctx.lineTo(player.x+15,player.y+15),
+                ctx.lineTo(player.x+5,player.y+25);
+                ctx.arc(player.x+15,player.y+15,15,0.75*Math.PI,1.25*Math.PI, true);
+                ctx.stroke();
+                ctx.fill();
+                break;
+            case 'r':
+                ctx.beginPath();
+                ctx.moveTo(player.x+25,player.y+5);
+                ctx.lineTo(player.x+15,player.y+15),
+                ctx.lineTo(player.x+25,player.y+25);
+                ctx.arc(player.x+15,player.y+15,15,0.25*Math.PI,1.75*Math.PI, false);
+                ctx.stroke();
+                ctx.fill();
+                break;
+            default:
+                ctx.beginPath();
+                ctx.moveTo(player.x+25,player.y+5);
+                ctx.lineTo(player.x+15,player.y+15),
+                ctx.lineTo(player.x+25,player.y+25);
+                ctx.arc(player.x+15,player.y+15,15,0.25*Math.PI,1.75*Math.PI);
+                ctx.stroke();
+                ctx.fill();
+                break;
+            
+        }
+    } else {
+        ctx.beginPath();
+        ctx.lineWidth = '1';
+        ctx.arc(player.x+15,player.y+15,15,0,2*Math.PI);
+        ctx.stroke();
+        ctx.fill();
+    }
 
     // draw ghosts
     let ghostColors = {
@@ -410,14 +472,36 @@ function drawScreen(player, ghosts) {
     }
     for(let i = 0; i < ghosts.length; i++) {
         ghost = ghosts[i];
+        ctx.strokeStyle = ghostColors[i];
         ctx.fillStyle = ghostColors[i];
-        ctx.fillRect(ghost.x, ghost.y, 30, 30);
+        //ctx.fillRect(ghost.x, ghost.y, 30, 30); // test rect
+        // body
+        ctx.beginPath();
+        ctx.moveTo(ghost.x + 0, ghost.y + 15);
+        ctx.lineTo(ghost.x + 0, ghost.y + 29);
+        ctx.lineTo(ghost.x + 30, ghost.y + 29);
+        ctx.lineTo(ghost.x + 30, ghost.y + 15);
+        ctx.arc(ghost.x + 15, ghost.y + 15, 15, 0, Math.PI, true);
+        ctx.stroke();
+        ctx.fill();
+         
+        // eyes
+        ctx.beginPath();
+        ctx.strokeStyle = 'white';
+        ctx.fillStyle = 'white';
+        ctx.moveTo(ghost.x + 10, ghost.y + 10);
+        ctx.arc(ghost.x + 10, ghost.y + 10,3,0,2*Math.PI);
+        ctx.moveTo(ghost.x + 20, ghost.y + 10);
+        ctx.arc(ghost.x + 20, ghost.y + 10,3,0,2*Math.PI);
+        ctx.stroke();
+        ctx.fill();
     }
-    
+
     //update clock
     clock += 1;
 
 }
+
 // Entity Inst
 let player = new Pacman(30,270);
 let ghosts = [
@@ -425,6 +509,7 @@ let ghosts = [
     new Ghost(270,300),
     new Ghost(330,270),
 ];
+
 // Game Loop area
 function updateGameArea() {
     document.onkeydown = function(e){player.checkKey(e)};
